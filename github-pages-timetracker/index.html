@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2D2D2D">
+<title>Time Tracker</title>
+<style>
+:root {
+  --copper: #B87333;
+  --copper-light: #D4955A;
+  --copper-dark: #8B5A2B;
+  --charcoal: #2D2D2D;
+  --charcoal-light: #3D3D3D;
+  --dark-bg: #1A1A1A;
+  --card-bg: #242424;
+  --card-border: #383838;
+  --text: #F0EDE8;
+  --text-mid: #A8A8A8;
+  --text-dim: #6B6B6B;
+  --green: #4CAF50;
+  --green-bg: rgba(76,175,80,0.15);
+  --red: #E57373;
+  --red-bg: rgba(229,115,115,0.12);
+  --blue: #64B5F6;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--dark-bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+.app-header {
+  background: var(--charcoal);
+  padding: 16px 20px 12px;
+  border-bottom: 3px solid var(--copper);
+  position: sticky; top: 0; z-index: 100;
+}
+.app-header h1 {
+  font-size: 18px; font-weight: 700; letter-spacing: 1px; color: var(--copper-light);
+}
+.app-header .subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* ── Tab Bar ── */
+.tab-bar {
+  display: flex; gap: 0;
+  background: var(--charcoal);
+  border-bottom: 1px solid var(--card-border);
+  position: sticky; top: 62px; z-index: 99;
+}
+.tab-btn {
+  flex: 1; padding: 12px 8px;
+  background: none; border: none; color: var(--text-dim);
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab-btn.active { color: var(--copper-light); border-bottom-color: var(--copper); }
+
+/* ── Views ── */
+.view { display: none; padding: 16px; }
+.view.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px; font-weight: 600; color: var(--copper-light);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+/* ── Form Elements ── */
+label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-mid); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+input, select, textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--dark-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-size: 16px; font-family: inherit; outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--copper); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8A8A8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+textarea { resize: vertical; min-height: 60px; }
+.field { margin-bottom: 12px; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+
+/* ── Custom add row ── */
+.add-custom-row { display: flex; gap: 8px; margin-top: 6px; }
+.add-custom-row input { flex: 1; font-size: 13px; padding: 8px 10px; }
+.add-custom-btn {
+  padding: 8px 14px; background: var(--copper-dark); color: #fff;
+  border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+
+/* ── Toggle ── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+}
+.toggle-label { font-size: 14px; color: var(--text); }
+.toggle {
+  position: relative; width: 50px; height: 28px;
+  background: var(--charcoal-light); border-radius: 14px;
+  cursor: pointer; transition: background 0.25s;
+}
+.toggle.on { background: var(--green); }
+.toggle .knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; background: #fff;
+  border-radius: 50%; transition: transform 0.25s;
+}
+.toggle.on .knob { transform: translateX(22px); }
+
+/* ── Timer ── */
+.timer-display {
+  text-align: center; padding: 20px 0;
+}
+.timer-time {
+  font-size: 48px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: var(--text); letter-spacing: 2px;
+}
+.timer-time.running { color: var(--green); }
+.timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+.btn {
+  padding: 12px 24px; border: none; border-radius: var(--radius-sm);
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  min-width: 100px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-start { background: var(--green); color: #fff; }
+.btn-stop { background: var(--red); color: #fff; }
+.btn-primary { background: var(--copper); color: #fff; }
+.btn-secondary { background: var(--charcoal-light); color: var(--text); border: 1px solid var(--card-border); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(229,115,115,0.3); }
+.btn-full { width: 100%; margin-top: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Entries List ── */
+.entry-item {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 8px;
+  position: relative;
+}
+.entry-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.entry-project { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.entry-hours {
+  font-size: 14px; font-weight: 700; color: var(--copper-light);
+  white-space: nowrap; margin-left: 8px;
+}
+.entry-detail { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+.entry-badge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px; margin-top: 6px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.entry-badge.billable { background: var(--green-bg); color: var(--green); }
+.entry-badge.non-billable { background: var(--red-bg); color: var(--red); }
+.entry-delete {
+  position: absolute; top: 8px; right: 8px;
+  background: none; border: none; color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1;
+}
+.entry-date-group { font-size: 12px; font-weight: 600; color: var(--copper); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.entry-date-group:first-child { margin-top: 0; }
+
+/* ── Summary Stats ── */
+.stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.stat-card {
+  flex: 1; background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 12px; text-align: center;
+}
+.stat-value { font-size: 22px; font-weight: 700; color: var(--copper-light); }
+.stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+
+/* ── Export Section ── */
+.export-section { margin-top: 16px; }
+.export-filters { margin-bottom: 12px; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--text-dim);
+}
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+.empty-state p { font-size: 14px; }
+
+/* ── Settings list items ── */
+.settings-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--card-border);
+}
+.settings-item:last-child { border-bottom: none; }
+.settings-item-label { font-size: 14px; }
+.settings-item-count { font-size: 12px; color: var(--text-dim); }
+.chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--charcoal-light); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 4px 10px; font-size: 12px; color: var(--text-mid);
+}
+.chip .remove {
+  background: none; border: none; color: var(--text-dim);
+  font-size: 14px; cursor: pointer; padding: 0 2px; line-height: 1;
+}
+
+/* ── Confirm overlay ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 200;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.show { display: flex; }
+.overlay-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 24px; max-width: 320px; width: 100%;
+  text-align: center;
+}
+.overlay-card h3 { font-size: 16px; margin-bottom: 8px; }
+.overlay-card p { font-size: 13px; color: var(--text-mid); margin-bottom: 20px; }
+.overlay-btns { display: flex; gap: 10px; }
+.overlay-btns .btn { flex: 1; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>TIME TRACKER</h1>
+  <div class="subtitle">Track &middot; Log &middot; Export</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="timer">Timer</button>
+  <button class="tab-btn" data-tab="manual">Manual</button>
+  <button class="tab-btn" data-tab="entries">Entries</button>
+  <button class="tab-btn" data-tab="export">Export</button>
+</div>
+
+<!-- ════════════ TIMER VIEW ════════════ -->
+<div id="view-timer" class="view active">
+  <div class="card">
+    <div class="card-title">Project</div>
+    <div class="field">
+      <select id="timerProject"><option value="">Select project...</option></select>
+    </div>
+    <div class="add-custom-row" id="timerProjectAdd" style="display:none;">
+      <input type="text" id="timerProjectNew" placeholder="e.g. JP2605 - New Project">
+      <button class="add-custom-btn" id="btnAddTimerProj">Add</button>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <select id="timerTask"><option value="">Select task...</option></select>
+    </div>
+    <div class="add-custom-row" id="timerTaskAdd" style="display:none;">
+      <input type="text" id="timerTaskNew" placeholder="e.g. Custom task type">
+      <button class="add-custom-btn" id="btnAddTimerTask">Add</button>
+    </div>
+    <div class="toggle-row" style="margin-top:8px;">
+      <span class="toggle-label">Billable</span>
+      <div class="toggle on" id="timerBillable"><div class="knob"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="timer-display">
+      <div class="timer-time" id="timerDisplay">00:00:00</div>
+    </div>
+    <div class="timer-btns">
+      <button class="btn btn-start" id="btnStart">Start</button>
+      <button class="btn btn-stop" id="btnStop" style="display:none;">Stop</button>
+    </div>
+  </div>
+
+  <div class="card" id="timerNotesCard">
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="timerNotes" rows="2" placeholder="What are you working on?"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ MANUAL VIEW ════════════ -->
+<div id="view-manual" class="view">
+  <div class="card">
+    <div class="card-title">Log Time</div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="manualDate">
+    </div>
+    <div class="field">
+      <label>Project</label>
+      <select id="manualProject"><option value="">Select project...</option></select>
+    </div>
+    <div class="add-custom-row" id="manualProjectAdd" style="display:none;">
+      <input type="text" id="manualProjectNew" placeholder="e.g. JP2605 - New Project">
+      <button class="add-custom-btn" id="btnAddManualProj">Add</button>
+    </div>
+    <div class="field">
+      <label>Task</label>
+      <select id="manualTask"><option value="">Select task...</option></select>
+    </div>
+    <div class="add-custom-row" id="manualTaskAdd" style="display:none;">
+      <input type="text" id="manualTaskNew" placeholder="e.g. Custom task type">
+      <button class="add-custom-btn" id="btnAddManualTask">Add</button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Start Time</label>
+        <input type="time" id="manualStart">
+      </div>
+      <div class="field">
+        <label>End Time</label>
+        <input type="time" id="manualEnd">
+      </div>
+    </div>
+    <div class="field">
+      <label>Or enter total hours</label>
+      <input type="number" id="manualHours" step="0.25" min="0" placeholder="e.g. 2.5">
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Billable</span>
+      <div class="toggle on" id="manualBillable"><div class="knob"></div></div>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="manualNotes" rows="2" placeholder="Description of work"></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" id="btnSaveManual">Save Entry</button>
+  </div>
+</div>
+
+<!-- ════════════ ENTRIES VIEW ════════════ -->
+<div id="view-entries" class="view">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">0.0</div>
+      <div class="stat-label">Total Hours</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statBillable">0.0</div>
+      <div class="stat-label">Billable</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statEntries">0</div>
+      <div class="stat-label">Entries</div>
+    </div>
+  </div>
+  <div id="entriesList"></div>
+</div>
+
+<!-- ════════════ EXPORT VIEW ════════════ -->
+<div id="view-export" class="view">
+  <div class="card">
+    <div class="card-title">Export Timesheet</div>
+    <div class="field">
+      <label>From</label>
+      <input type="date" id="exportFrom">
+    </div>
+    <div class="field">
+      <label>To</label>
+      <input type="date" id="exportTo">
+    </div>
+    <div class="field">
+      <label>Filter Project</label>
+      <select id="exportProject"><option value="">All projects</option></select>
+    </div>
+    <div class="field">
+      <label>Filter Billable</label>
+      <select id="exportBillable">
+        <option value="">All</option>
+        <option value="yes">Billable only</option>
+        <option value="no">Non-billable only</option>
+      </select>
+    </div>
+    <div id="exportPreview" style="margin-top:12px;"></div>
+    <button class="btn btn-primary btn-full" id="btnExportCSV">Download CSV</button>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Manage Data</div>
+    <button class="btn btn-secondary btn-full" id="btnExportJSON">Backup All Data (JSON)</button>
+    <button class="btn btn-secondary btn-full" id="btnImportJSON">Restore Backup</button>
+    <input type="file" id="importJSON" accept=".json" style="display:none">
+    <button class="btn btn-danger btn-full" id="btnClearAll">Clear All Entries</button>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Custom Projects</div>
+    <div class="chip-list" id="customProjectChips"></div>
+    <div class="card-title" style="margin-top:16px;">Custom Tasks</div>
+    <div class="chip-list" id="customTaskChips"></div>
+  </div>
+</div>
+
+<!-- ── Confirm Overlay ── -->
+<div class="overlay" id="confirmOverlay">
+  <div class="overlay-card">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg">Are you sure?</p>
+    <div class="overlay-btns">
+      <button class="btn btn-secondary" id="btnConfirmCancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmAction">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════════
+
+const DB_NAME = 'TimeTracker';
+const DB_VERSION = 1;
+let db = null;
+let useDB = true; // falls back to memory-only if IndexedDB unavailable
+
+const DEFAULT_PROJECTS = [];
+const DEFAULT_TASKS = [];
+
+let customProjects = [];
+let customTasks = [];
+let entries = [];
+
+// Timer state
+let timerInterval = null;
+let timerStartTime = null;
+let timerElapsed = 0;
+
+// ═══════════════════════════════════════════════
+//  INDEXEDDB (with fallback)
+// ═══════════════════════════════════════════════
+
+function openDB() {
+  return new Promise((resolve) => {
+    try {
+      if (!window.indexedDB) { useDB = false; resolve(null); return; }
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('entries')) d.createObjectStore('entries', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
+      };
+      req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+      req.onerror = () => { useDB = false; resolve(null); };
+    } catch(e) { useDB = false; resolve(null); }
+  });
+}
+
+function dbPut(store, data) {
+  if (!useDB || !db) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    try {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).put(data);
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    } catch(e) { resolve(); }
+  });
+}
+
+function dbGetAll(store) {
+  if (!useDB || !db) return Promise.resolve([]);
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve([]);
+    } catch(e) { resolve([]); }
+  });
+}
+
+function dbGet(store, key) {
+  if (!useDB || !db) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch(e) { resolve(null); }
+  });
+}
+
+function dbDelete(store, key) {
+  if (!useDB || !db) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch(e) { resolve(); }
+  });
+}
+
+function dbClear(store) {
+  if (!useDB || !db) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch(e) { resolve(); }
+  });
+}
+
+async function saveSettings() {
+  await dbPut('settings', { key: 'customProjects', value: customProjects });
+  await dbPut('settings', { key: 'customTasks', value: customTasks });
+}
+
+async function loadAll() {
+  const allEntries = await dbGetAll('entries');
+  entries = allEntries.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const cp = await dbGet('settings', 'customProjects');
+  if (cp) customProjects = cp.value;
+  const ct = await dbGet('settings', 'customTasks');
+  if (ct) customTasks = ct.value;
+}
+
+// ═══════════════════════════════════════════════
+//  DROPDOWN POPULATION
+// ═══════════════════════════════════════════════
+
+function allProjectsList() { return [...DEFAULT_PROJECTS, ...customProjects]; }
+function allTasksList() { return [...DEFAULT_TASKS, ...customTasks]; }
+
+function populateDropdowns() {
+  var projSelects = ['timerProject', 'manualProject', 'exportProject'];
+  var taskSelects = ['timerTask', 'manualTask'];
+
+  projSelects.forEach(function(id) {
+    var sel = document.getElementById(id);
+    var val = sel.value;
+    var isExport = id === 'exportProject';
+    sel.innerHTML = '<option value="">' + (isExport ? 'All projects' : 'Select project...') + '</option>';
+    allProjectsList().forEach(function(p) {
+      sel.innerHTML += '<option value="' + esc(p) + '">' + esc(p) + '</option>';
+    });
+    sel.innerHTML += '<option value="__add__">+ Add new project</option>';
+    if (val && val !== '__add__') sel.value = val;
+  });
+
+  taskSelects.forEach(function(id) {
+    var sel = document.getElementById(id);
+    var val = sel.value;
+    sel.innerHTML = '<option value="">Select task...</option>';
+    allTasksList().forEach(function(t) {
+      sel.innerHTML += '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+    });
+    sel.innerHTML += '<option value="__add__">+ Add new task</option>';
+    if (val && val !== '__add__') sel.value = val;
+  });
+
+  renderCustomChips();
+}
+
+async function addCustomProject(prefix) {
+  var inp = document.getElementById(prefix + 'ProjectNew');
+  var val = inp.value.trim();
+  if (!val) return;
+  if (customProjects.indexOf(val) === -1) {
+    customProjects.push(val);
+    await saveSettings();
+  }
+  populateDropdowns();
+  document.getElementById(prefix + 'Project').value = val;
+  document.getElementById(prefix + 'ProjectAdd').style.display = 'none';
+  inp.value = '';
+}
+
+async function addCustomTask(prefix) {
+  var inp = document.getElementById(prefix + 'TaskNew');
+  var val = inp.value.trim();
+  if (!val) return;
+  if (customTasks.indexOf(val) === -1) {
+    customTasks.push(val);
+    await saveSettings();
+  }
+  populateDropdowns();
+  document.getElementById(prefix + 'Task').value = val;
+  document.getElementById(prefix + 'TaskAdd').style.display = 'none';
+  inp.value = '';
+}
+
+function renderCustomChips() {
+  var pc = document.getElementById('customProjectChips');
+  var tc = document.getElementById('customTaskChips');
+  if (customProjects.length === 0) {
+    pc.innerHTML = '<span style="color:var(--text-dim);font-size:12px;">No custom projects</span>';
+  } else {
+    pc.innerHTML = customProjects.map(function(p, i) {
+      return '<span class="chip">' + esc(p) + '<button class="remove" data-type="project" data-idx="' + i + '">&times;</button></span>';
+    }).join('');
+  }
+  if (customTasks.length === 0) {
+    tc.innerHTML = '<span style="color:var(--text-dim);font-size:12px;">No custom tasks</span>';
+  } else {
+    tc.innerHTML = customTasks.map(function(t, i) {
+      return '<span class="chip">' + esc(t) + '<button class="remove" data-type="task" data-idx="' + i + '">&times;</button></span>';
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════
+
+function startTimer() {
+  var proj = document.getElementById('timerProject').value;
+  var task = document.getElementById('timerTask').value;
+  if (!proj || proj === '__add__') { flash('timerProject'); return; }
+  if (!task || task === '__add__') { flash('timerTask'); return; }
+
+  timerStartTime = Date.now();
+  timerElapsed = 0;
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnStop').style.display = '';
+  document.getElementById('timerDisplay').classList.add('running');
+
+  timerInterval = setInterval(function() {
+    timerElapsed = Date.now() - timerStartTime;
+    document.getElementById('timerDisplay').textContent = formatMs(timerElapsed);
+  }, 1000);
+}
+
+async function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerElapsed = Date.now() - timerStartTime;
+
+  var hours = Math.round(timerElapsed / 900000) * 0.25;
+  var proj = document.getElementById('timerProject').value;
+  var task = document.getElementById('timerTask').value;
+  var billable = document.getElementById('timerBillable').classList.contains('on');
+  var notes = document.getElementById('timerNotes').value.trim();
+
+  var now = new Date();
+  var startDate = new Date(timerStartTime);
+
+  var entry = {
+    id: genId(),
+    date: formatDate(startDate),
+    project: proj,
+    task: task,
+    startTime: formatTime(startDate),
+    endTime: formatTime(now),
+    hours: Math.max(hours, 0.25),
+    billable: billable,
+    notes: notes
+  };
+
+  entries.unshift(entry);
+  await dbPut('entries', entry);
+
+  document.getElementById('btnStart').style.display = '';
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('timerDisplay').classList.remove('running');
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('timerNotes').value = '';
+  timerStartTime = null;
+  timerElapsed = 0;
+
+  updateStats();
+  showToast('Logged ' + entry.hours + 'h to ' + proj);
+}
+
+// ═══════════════════════════════════════════════
+//  MANUAL ENTRY
+// ═══════════════════════════════════════════════
+
+async function saveManualEntry() {
+  var date = document.getElementById('manualDate').value;
+  var proj = document.getElementById('manualProject').value;
+  var task = document.getElementById('manualTask').value;
+  var startTime = document.getElementById('manualStart').value;
+  var endTime = document.getElementById('manualEnd').value;
+  var manualHours = parseFloat(document.getElementById('manualHours').value);
+  var billable = document.getElementById('manualBillable').classList.contains('on');
+  var notes = document.getElementById('manualNotes').value.trim();
+
+  if (!date) { flash('manualDate'); return; }
+  if (!proj || proj === '__add__') { flash('manualProject'); return; }
+  if (!task || task === '__add__') { flash('manualTask'); return; }
+
+  var hours = 0;
+  if (!isNaN(manualHours) && manualHours > 0) {
+    hours = manualHours;
+  } else if (startTime && endTime) {
+    var sp = startTime.split(':'), ep = endTime.split(':');
+    var sh = parseInt(sp[0]), sm = parseInt(sp[1]);
+    var eh = parseInt(ep[0]), em = parseInt(ep[1]);
+    hours = (eh * 60 + em - sh * 60 - sm) / 60;
+    if (hours <= 0) { flash('manualEnd'); return; }
+    hours = Math.round(hours * 4) / 4;
+  } else {
+    flash('manualHours'); return;
+  }
+
+  var entry = {
+    id: genId(),
+    date: date,
+    project: proj,
+    task: task,
+    startTime: startTime || '',
+    endTime: endTime || '',
+    hours: hours,
+    billable: billable,
+    notes: notes
+  };
+
+  entries.unshift(entry);
+  entries.sort(function(a, b) { return b.date.localeCompare(a.date) || b.id.localeCompare(a.id); });
+  await dbPut('entries', entry);
+
+  document.getElementById('manualStart').value = '';
+  document.getElementById('manualEnd').value = '';
+  document.getElementById('manualHours').value = '';
+  document.getElementById('manualNotes').value = '';
+
+  updateStats();
+  showToast('Logged ' + hours + 'h to ' + proj);
+}
+
+// ═══════════════════════════════════════════════
+//  ENTRIES VIEW
+// ═══════════════════════════════════════════════
+
+function renderEntries() {
+  var container = document.getElementById('entriesList');
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">&#9716;</div><p>No time entries yet.<br>Use the Timer or Manual tab to log time.</p></div>';
+    return;
+  }
+
+  var html = '';
+  var currentDate = '';
+  entries.forEach(function(e) {
+    if (e.date !== currentDate) {
+      currentDate = e.date;
+      var d = new Date(e.date + 'T00:00:00');
+      var dayName = d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+      var dayTotal = entries.filter(function(x) { return x.date === e.date; }).reduce(function(s, x) { return s + x.hours; }, 0);
+      html += '<div class="entry-date-group">' + dayName + ' \u2014 ' + dayTotal.toFixed(1) + 'h</div>';
+    }
+    var times = e.startTime && e.endTime ? e.startTime + ' \u2013 ' + e.endTime + ' \u00b7 ' : '';
+    html += '<div class="entry-item">' +
+      '<button class="entry-delete" data-entry-id="' + e.id + '">&times;</button>' +
+      '<div class="entry-top">' +
+        '<div class="entry-project">' + esc(e.project) + '</div>' +
+        '<div class="entry-hours">' + e.hours.toFixed(2) + 'h</div>' +
+      '</div>' +
+      '<div class="entry-detail">' + times + esc(e.task) + '</div>' +
+      (e.notes ? '<div class="entry-detail" style="margin-top:2px;color:var(--text-dim);">' + esc(e.notes) + '</div>' : '') +
+      '<span class="entry-badge ' + (e.billable ? 'billable' : 'non-billable') + '">' + (e.billable ? 'Billable' : 'Non-billable') + '</span>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function deleteEntry(id) {
+  showConfirm('Delete Entry', 'Remove this time entry?', async function() {
+    entries = entries.filter(function(e) { return e.id !== id; });
+    await dbDelete('entries', id);
+    updateStats();
+  });
+}
+
+function updateStats() {
+  var total = entries.reduce(function(s, e) { return s + e.hours; }, 0);
+  var billable = entries.filter(function(e) { return e.billable; }).reduce(function(s, e) { return s + e.hours; }, 0);
+  document.getElementById('statTotal').textContent = total.toFixed(1);
+  document.getElementById('statBillable').textContent = billable.toFixed(1);
+  document.getElementById('statEntries').textContent = entries.length;
+  renderEntries();
+  updateExportPreview();
+}
+
+// ═══════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════
+
+function getFilteredEntries() {
+  var from = document.getElementById('exportFrom').value;
+  var to = document.getElementById('exportTo').value;
+  var proj = document.getElementById('exportProject').value;
+  var billFilter = document.getElementById('exportBillable').value;
+
+  return entries.filter(function(e) {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    if (proj && e.project !== proj) return false;
+    if (billFilter === 'yes' && !e.billable) return false;
+    if (billFilter === 'no' && e.billable) return false;
+    return true;
+  });
+}
+
+function updateExportPreview() {
+  var filtered = getFilteredEntries();
+  var total = filtered.reduce(function(s, e) { return s + e.hours; }, 0);
+  var billable = filtered.filter(function(e) { return e.billable; }).reduce(function(s, e) { return s + e.hours; }, 0);
+  document.getElementById('exportPreview').innerHTML =
+    '<div style="font-size:13px;color:var(--text-mid);padding:8px 0;">' +
+    '<strong>' + filtered.length + '</strong> entries \u00b7 <strong>' + total.toFixed(1) + '</strong> total hours \u00b7 <strong>' + billable.toFixed(1) + '</strong> billable' +
+    '</div>';
+}
+
+function exportCSV() {
+  var filtered = getFilteredEntries();
+  if (filtered.length === 0) { showToast('No entries to export'); return; }
+
+  var headers = ['Date', 'Project', 'Task', 'Start', 'End', 'Hours', 'Billable', 'Notes'];
+  var rows = filtered.map(function(e) {
+    return [
+      e.date,
+      '"' + e.project.replace(/"/g, '""') + '"',
+      '"' + e.task.replace(/"/g, '""') + '"',
+      e.startTime || '',
+      e.endTime || '',
+      e.hours.toFixed(2),
+      e.billable ? 'Yes' : 'No',
+      '"' + (e.notes || '').replace(/"/g, '""') + '"'
+    ];
+  });
+
+  var csv = [headers.join(',')].concat(rows.map(function(r) { return r.join(','); })).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+
+  var from = document.getElementById('exportFrom').value;
+  var to = document.getElementById('exportTo').value;
+  var fname = 'Timesheet';
+  if (from || to) fname += ' ' + (from || 'start') + ' to ' + (to || 'end');
+  fname += '.csv';
+
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded');
+}
+
+function exportJSON() {
+  var data = { entries: entries, customProjects: customProjects, customTasks: customTasks, exported: new Date().toISOString() };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Time Tracker Backup.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  showToast('Backup downloaded');
+}
+
+async function importJSON(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var text = await file.text();
+  try {
+    var data = JSON.parse(text);
+    if (data.entries && Array.isArray(data.entries)) {
+      var existingIds = {};
+      entries.forEach(function(e) { existingIds[e.id] = true; });
+      var added = 0;
+      for (var i = 0; i < data.entries.length; i++) {
+        var e = data.entries[i];
+        if (!existingIds[e.id]) {
+          entries.push(e);
+          await dbPut('entries', e);
+          added++;
+        }
+      }
+      entries.sort(function(a, b) { return b.date.localeCompare(a.date) || b.id.localeCompare(a.id); });
+
+      if (data.customProjects) {
+        data.customProjects.forEach(function(p) { if (customProjects.indexOf(p) === -1) customProjects.push(p); });
+      }
+      if (data.customTasks) {
+        data.customTasks.forEach(function(t) { if (customTasks.indexOf(t) === -1) customTasks.push(t); });
+      }
+      await saveSettings();
+      populateDropdowns();
+      updateStats();
+      showToast('Restored ' + added + ' new entries');
+    }
+  } catch (err) {
+    showToast('Invalid backup file');
+  }
+  event.target.value = '';
+}
+
+function confirmClearAll() {
+  showConfirm('Clear All Entries', 'Delete all ' + entries.length + ' entries? This cannot be undone. Consider downloading a backup first.', async function() {
+    entries = [];
+    await dbClear('entries');
+    updateStats();
+    showToast('All entries cleared');
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════
+
+function toggleBillable(el) {
+  el.classList.toggle('on');
+}
+
+function flash(id) {
+  var el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  setTimeout(function() { el.style.borderColor = ''; }, 1500);
+}
+
+function showToast(msg) {
+  var toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--copper);color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(function() { toast.style.opacity = '0'; }, 2200);
+}
+
+var confirmCallback = null;
+function showConfirm(title, msg, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOverlay').classList.add('show');
+  confirmCallback = onConfirm;
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  confirmCallback = null;
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+function formatMs(ms) {
+  var s = Math.floor(ms / 1000);
+  var h = Math.floor(s / 3600);
+  var m = Math.floor((s % 3600) / 60);
+  var sec = s % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function formatDate(d) {
+  return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate();
+}
+
+function formatTime(d) {
+  return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+}
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ═══════════════════════════════════════════════
+//  EVENT LISTENERS (all via addEventListener, no inline onclick)
+// ═══════════════════════════════════════════════
+
+// Tab navigation
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.getAttribute('data-tab')).classList.add('active');
+    if (btn.getAttribute('data-tab') === 'entries') updateStats();
+    if (btn.getAttribute('data-tab') === 'export') { updateExportPreview(); renderCustomChips(); }
+  });
+});
+
+// Timer buttons
+document.getElementById('btnStart').addEventListener('click', startTimer);
+document.getElementById('btnStop').addEventListener('click', stopTimer);
+
+// Manual save
+document.getElementById('btnSaveManual').addEventListener('click', saveManualEntry);
+
+// Billable toggles
+document.getElementById('timerBillable').addEventListener('click', function() { toggleBillable(this); });
+document.getElementById('manualBillable').addEventListener('click', function() { toggleBillable(this); });
+
+// Project/task "add new" show/hide
+['timerProject', 'manualProject'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() {
+    var prefix = id.replace('Project', '');
+    document.getElementById(prefix + 'ProjectAdd').style.display = this.value === '__add__' ? 'flex' : 'none';
+  });
+});
+['timerTask', 'manualTask'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() {
+    var prefix = id.replace('Task', '');
+    document.getElementById(prefix + 'TaskAdd').style.display = this.value === '__add__' ? 'flex' : 'none';
+  });
+});
+
+// Add custom project/task buttons
+document.getElementById('btnAddTimerProj').addEventListener('click', function() { addCustomProject('timer'); });
+document.getElementById('btnAddManualProj').addEventListener('click', function() { addCustomProject('manual'); });
+document.getElementById('btnAddTimerTask').addEventListener('click', function() { addCustomTask('timer'); });
+document.getElementById('btnAddManualTask').addEventListener('click', function() { addCustomTask('manual'); });
+
+// Export buttons
+document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+document.getElementById('btnExportJSON').addEventListener('click', exportJSON);
+document.getElementById('btnImportJSON').addEventListener('click', function() { document.getElementById('importJSON').click(); });
+document.getElementById('importJSON').addEventListener('change', importJSON);
+document.getElementById('btnClearAll').addEventListener('click', confirmClearAll);
+
+// Export filter changes
+['exportFrom', 'exportTo', 'exportProject', 'exportBillable'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', updateExportPreview);
+});
+
+// Confirm overlay
+document.getElementById('btnConfirmCancel').addEventListener('click', closeConfirm);
+document.getElementById('confirmAction').addEventListener('click', function() {
+  closeConfirm();
+  if (confirmCallback) confirmCallback();
+});
+
+// Delegated click handlers for dynamic content (entry delete, chip remove)
+document.addEventListener('click', function(e) {
+  // Delete entry
+  var delBtn = e.target.closest('.entry-delete');
+  if (delBtn && delBtn.getAttribute('data-entry-id')) {
+    deleteEntry(delBtn.getAttribute('data-entry-id'));
+    return;
+  }
+  // Remove custom chip
+  var removeBtn = e.target.closest('.remove');
+  if (removeBtn) {
+    var type = removeBtn.getAttribute('data-type');
+    var idx = parseInt(removeBtn.getAttribute('data-idx'));
+    if (type === 'project') {
+      customProjects.splice(idx, 1);
+    } else if (type === 'task') {
+      customTasks.splice(idx, 1);
+    }
+    saveSettings();
+    populateDropdowns();
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════════════════════
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function() {});
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+
+async function init() {
+  try {
+    await openDB();
+    await loadAll();
+  } catch(e) {
+    console.warn('DB init failed, running in memory-only mode');
+    useDB = false;
+  }
+  populateDropdowns();
+
+  document.getElementById('manualDate').value = formatDate(new Date());
+
+  var now = new Date();
+  var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  document.getElementById('exportFrom').value = formatDate(firstOfMonth);
+  document.getElementById('exportTo').value = formatDate(now);
+
+  updateStats();
+
+  if (!useDB) {
+    showToast('Offline mode \u2014 data won\u0027t persist between sessions');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
